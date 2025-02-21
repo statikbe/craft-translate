@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 5.0.1 - 2025-02-21
+### Fixed
+- Fixed an error in the download dropdown when devMode was enabled ([#17](https://github.com/statikbe/craft-translate/issues/17))
+
 ## 5.0.0 - 2024-05-28
 ### Added
 - Craft 5 support
