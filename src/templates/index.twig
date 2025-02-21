@@ -15,6 +15,7 @@
 {% set elementType = 'statikbe\\translate\\elements\\Translate' %}
 
 {% do view.registerAssetBundle("statikbe\\translate\\assetbundles\\translate\\TranslateAsset") %}
+{% set selectedSite = craft.app.request.getQueryParam('site', null) ? craft.app.sites.getSiteByHandle(craft.app.request.getQueryParam('site')) : craft.app.sites.primarySite %}
 
 {% block actionButton %}
 
@@ -27,7 +28,7 @@
                 <li>
                     <a id="download-button" class="formsubmit translations-download-button"
                        data-action="translate/translate/download"
-                       data-siteId="{{ elementInstance.siteId }}">
+                       data-siteId="{{ selectedSite.id }}">
                         {{ "Download"|t('translate') }}
                     </a>
                 </li>
@@ -40,7 +41,6 @@
 
     <form method="post" id="translate-ajax" accept-charset="utf-8" style="display: flex; flex-direction: column; gap: 3rem;">
         {{ csrfInput() }}
-        {% set selectedSite = craft.app.request.getQueryParam('site', null) ? craft.app.sites.getSiteByHandle(craft.app.request.getQueryParam('site')) : craft.app.sites.primarySite %}
         <input type="hidden" name="siteId" value="{{  selectedSite.id }}">
         <input type="hidden" name="action" value="translate/translate/save">
         <input type="hidden" name="sourceKey" value="{{ craft.app.request.getParam('source') }}">
@@ -55,7 +55,7 @@
 
         {{ parent() }}
 
-{# Verwijderd footer blok, pagination werkt niet maar alles wordt getoond op 1pagina => oplossing niet gevonden (in baseElementIndex.js staat count-Container klasse #}
+        {# Verwijderd footer blok, pagination werkt niet maar alles wordt getoond op 1pagina => oplossing niet gevonden (in baseElementIndex.js staat count-Container klasse #}
         {% block footer %}
         {% endblock %}
     </form>
@@ -63,6 +63,6 @@
 
 {% js %}
     $(document).ready(function() {
-        new StatikTranslate();
+    new StatikTranslate();
     });
 {% endjs %}

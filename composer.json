@@ -2,7 +2,7 @@
   "name": "statikbe/craft-translate",
   "description": "Translate static string from the Craft control panel",
   "type": "craft-plugin",
-  "version": "5.0.0",
+  "version": "5.0.1",
   "keywords": [
     "craft",
     "cms",
@@ -11,8 +11,8 @@
     "translate"
   ],
   "support": {
-    "docs": "https://github.com/statikbe/craft3-translate/blob/master/README.md",
-    "issues": "https://github.com/statikbe/craft3-translate/issues"
+    "docs": "https://github.com/statikbe/craft-translate/blob/master/README.md",
+    "issues": "https://github.com/statikbe/craft-translate/issues"
   },
   "license": "MIT",
   "authors": [
