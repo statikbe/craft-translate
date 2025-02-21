@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 2.1.5 - 2025-02-21
+### Fixed
+- Fixed an error in the download dropdown when devMode was enabled ([#17](https://github.com/statikbe/craft-translate/issues/17))
 
 ## 2.1.4 - 2024-01-24
 ### Fixed
