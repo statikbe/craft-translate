@@ -1,19 +1,35 @@
 <?php
 
-use craft\test\TestSetup;
+define('YII_ENV', 'test');
+define('YII_DEBUG', true);
 
-ini_set('date.timezone', 'UTC');
-date_default_timezone_set('UTC');
+// Set path constants
+define('CRAFT_BASE_PATH', __DIR__ . '/_craft');
+define('CRAFT_STORAGE_PATH', __DIR__ . '/_craft/storage');
+define('CRAFT_TEMPLATES_PATH', __DIR__ . '/_craft/templates');
+define('CRAFT_CONFIG_PATH', __DIR__ . '/_craft/config');
+define('CRAFT_VENDOR_PATH', __DIR__ . '/../vendor');
+define('CRAFT_ROOT_PATH', dirname(__DIR__));
 
-// Use the current installation of Craft
-define('CRAFT_TESTS_PATH', __DIR__);
-define('CRAFT_STORAGE_PATH', __DIR__ . DIRECTORY_SEPARATOR . '_craft' . DIRECTORY_SEPARATOR . 'storage');
-define('CRAFT_TEMPLATES_PATH', __DIR__ . DIRECTORY_SEPARATOR . '_craft' . DIRECTORY_SEPARATOR . 'templates');
-define('CRAFT_CONFIG_PATH', __DIR__ . DIRECTORY_SEPARATOR . '_craft' . DIRECTORY_SEPARATOR . 'config');
-define('CRAFT_MIGRATIONS_PATH', __DIR__ . DIRECTORY_SEPARATOR . '_craft' . DIRECTORY_SEPARATOR . 'migrations');
-define('CRAFT_TRANSLATIONS_PATH', __DIR__ . DIRECTORY_SEPARATOR . '_craft' . DIRECTORY_SEPARATOR . 'translations');
-define('CRAFT_VENDOR_PATH', dirname(__DIR__) . DIRECTORY_SEPARATOR . 'vendor');
 
-$devMode = true;
 
-TestSetup::configureCraft();
+error_reporting(E_ALL);
+ini_set('log_errors', 1);
+ini_set('error_log', CRAFT_STORAGE_PATH . '/logs/phperrors.log');
+ini_set('display_errors', 1);
+
+// Load Composer's autoloader
+require_once CRAFT_VENDOR_PATH . '/autoload.php';
+
+// Load dotenv?
+if (file_exists(CRAFT_BASE_PATH . '/.env')) {
+    if (class_exists(Dotenv\Dotenv::class)) {
+        // By default, this will allow .env file values to override environment variables
+        // with matching names. Use `createUnsafeImmutable` to disable this.
+        Dotenv\Dotenv::createUnsafeMutable(CRAFT_BASE_PATH)->safeLoad();
+    }
+}
+
+// Load and run Craft
+define('CRAFT_ENVIRONMENT', 'test');
+$app = require CRAFT_VENDOR_PATH . '/craftcms/cms/bootstrap/console.php';
