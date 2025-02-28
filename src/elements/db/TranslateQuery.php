@@ -14,7 +14,6 @@ use craft\elements\db\ElementQuery;
 
 class TranslateQuery extends ElementQuery
 {
-
     // General - Properties
     // =========================================================================
     public mixed $id = null;

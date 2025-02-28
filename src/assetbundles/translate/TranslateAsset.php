@@ -26,7 +26,7 @@ class TranslateAsset extends AssetBundle
         ];
 
         $this->js = [
-            'js/statikTranslate.js'
+            'js/statikTranslate.js',
         ];
 
         parent::init();

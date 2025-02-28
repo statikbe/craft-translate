@@ -14,7 +14,6 @@ use Craft;
 use craft\base\Element;
 use craft\elements\db\ElementQueryInterface;
 use craft\elements\User;
-use craft\helpers\FileHelper;
 use craft\web\ErrorHandler;
 use statikbe\translate\elements\db\TranslateQuery;
 use statikbe\translate\events\RegisterPluginTranslationEvent;
@@ -26,11 +25,11 @@ class Translate extends Element
     /**
      * Status constants.
      */
-    const ALL = 'all';
-    const TRANSLATED = 'live';
-    const PENDING = 'disabled';
+    public const ALL = 'all';
+    public const TRANSLATED = 'live';
+    public const PENDING = 'disabled';
 
-    const EVENT_REGISTER_PLUGIN_TRANSLATION = "event_register_plugin_translation";
+    public const EVENT_REGISTER_PLUGIN_TRANSLATION = "event_register_plugin_translation";
 
     public $original;
     public $translation;
@@ -155,7 +154,7 @@ class Translate extends Element
             'translation',
             'source',
             'file',
-            'locale'
+            'locale',
         ];
     }
 
@@ -173,14 +172,14 @@ class Translate extends Element
             'key' => 'all-templates:',
             'criteria' => [
                 'source' => [
-                    Craft::$app->path->getSiteTemplatesPath()
-                ]
+                    Craft::$app->path->getSiteTemplatesPath(),
+                ],
             ],
 //            'nested' => $templateSources
         ];
 
         $event = new RegisterPluginTranslationEvent([
-            'plugins' => []
+            'plugins' => [],
         ]);
 
         Event::trigger(__CLASS__, self::EVENT_REGISTER_PLUGIN_TRANSLATION, $event);
@@ -196,7 +195,7 @@ class Translate extends Element
                 'criteria' => [
                     'pluginHandle' => $module->getHandle(),
                     'source' => [
-                        $module->getBasePath()
+                        $module->getBasePath(),
                     ],
                 ],
             ];
@@ -211,7 +210,7 @@ class Translate extends Element
                     'source' => [
                     ],
                 ],
-                'nested' => $modulesSources
+                'nested' => $modulesSources,
             ];
         }
 
@@ -240,9 +239,8 @@ class Translate extends Element
         string                $context = null,
         bool                  $includeContainer,
         bool                  $showCheckboxes,
-        bool                  $sortable
-    ): string
-    {
+        bool                  $sortable,
+    ): string {
         // just 1 locale enabled
         if (empty($elementQuery->siteId)) {
             $primarySite = Craft::$app->getSites()->getPrimarySite();

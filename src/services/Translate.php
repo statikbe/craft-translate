@@ -50,7 +50,7 @@ class Translate extends Component
             '/Craft\.(t|translate)\(.*?\'(.*?)\'.*?\,.*?\'(.*?)\'.*?\)/',
             // Double quotes
             '/Craft\.(t|translate)\(.*?"(.*?)".*?\,.*?"(.*?)".*?\)/',
-        )
+        ),
     );
 
 
@@ -104,7 +104,6 @@ class Translate extends Component
         // Save code to file
         try {
             FileHelper::writeToFile($file, $php);
-
         } catch (Throwable $e) {
             throw new Exception(Craft::t('translate', 'Something went wrong while saving your translations: ' . $e->getMessage()));
         }
@@ -136,7 +135,7 @@ class Translate extends Component
         // Loop through paths
 
         foreach ($query->source as $path) {
-            if($query->pluginHandle) {
+            if ($query->pluginHandle) {
                 $category = $query->pluginHandle;
             }
             // Check if this is a folder or a file
@@ -146,7 +145,7 @@ class Translate extends Component
                 $options = [
                     'recursive' => true,
                     'only' => ['*.php', '*.html', '*.twig', '*.js', '*.json', '*.atom', '*.rss'],
-                    'except' => ['vendor/', 'node_modules/']
+                    'except' => ['vendor/', 'node_modules/'],
                 ];
 
                 $files = FileHelper::findFiles($path, $options);
@@ -272,5 +271,4 @@ class Translate extends Component
         $sitePath = Craft::$app->getPath()->getSiteTranslationsPath();
         return $sitePath . DIRECTORY_SEPARATOR . $locale . DIRECTORY_SEPARATOR . 'site.php';
     }
-
 }

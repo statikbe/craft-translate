@@ -31,7 +31,5 @@ class Translate extends Plugin
         $this->setComponents([
             'translate' => TranslateService::class,
         ]);
-
     }
 }
-

@@ -71,8 +71,8 @@ class TranslateController extends BaseController
             $sources[] = Craft::$app->path->getSiteTemplatesPath();
         }
 
-        if (empty($sources)){
-            return $this->asJson(['success'=> false]);
+        if (empty($sources)) {
+            return $this->asJson(['success' => false]);
         }
 
         $site = Craft::$app->getSites()->getSiteById($siteId);
@@ -86,10 +86,10 @@ class TranslateController extends BaseController
         $occurences = Translate::getInstance()->translate->get($query);
 
         // Re-order data
-        $data = StringHelper::convertToUTF8('"'.Craft::t('translate','Source {language}',['language'=> $site->language]).'","'.Craft::t('translate','Translation')."\"\r\n");
+        $data = StringHelper::convertToUTF8('"' . Craft::t('translate','Source {language}',['language' => $site->language]) . '","' . Craft::t('translate','Translation') . "\"\r\n");
 
         foreach ($occurences as $element) {
-            $data .= StringHelper::convertToUTF8('"'.$element->original.'","'.$element->translation."\"\r\n");
+            $data .= StringHelper::convertToUTF8('"' . $element->original . '","' . $element->translation . "\"\r\n");
         }
 
         $info = Craft::$app->getInfo();
@@ -99,22 +99,22 @@ class TranslateController extends BaseController
             $pluginName ?? "import",
             [
                 'asciiOnly' => true,
-                'separator' => '_'
+                'separator' => '_',
             ]
         );
         $date = date('YmdHis');
         $primarySite = Craft::$app->getSites()->getPrimarySite();
-        $sourceTo = $primarySite->language.'_to_'.$site->language;
-        $fileName = strtolower($systemName.'_translations_'.$sourceTo.'_'.$date);
-        $file = Craft::$app->getPath()->getTempPath().DIRECTORY_SEPARATOR.StringHelper::toLowerCase($fileName.'.csv');
-        $fd = fopen ($file, "w");
+        $sourceTo = $primarySite->language . '_to_' . $site->language;
+        $fileName = strtolower($systemName . '_translations_' . $sourceTo . '_' . $date);
+        $file = Craft::$app->getPath()->getTempPath() . DIRECTORY_SEPARATOR . StringHelper::toLowerCase($fileName . '.csv');
+        $fd = fopen($file, "w");
         fputs($fd, $data);
         fclose($fd);
 
         // Download the file
         $response = [
-            'success'=> true,
-            'filePath' => $file
+            'success' => true,
+            'filePath' => $file,
         ];
 
         return $this->asJson($response);
@@ -148,10 +148,10 @@ class TranslateController extends BaseController
         $this->requireAcceptsJson();
         $response = [
             'success' => true,
-            'errors' => []
+            'errors' => [],
         ];
         $siteId = Craft::$app->request->getBodyParam('siteId');
-        if(!$siteId) {
+        if (!$siteId) {
             $siteId = Craft::$app->getSites()->getPrimarySite()->id;
         }
         $sourceKey = Craft::$app->request->getRequiredBodyParam('sourceKey');
@@ -172,7 +172,7 @@ class TranslateController extends BaseController
                     $translatePath = $sitePath . DIRECTORY_SEPARATOR . $site->language . DIRECTORY_SEPARATOR . $pluginHandle . '.php';
                 }
             } else {
-                    $translatePath = $sitePath . DIRECTORY_SEPARATOR . $site->language . DIRECTORY_SEPARATOR . $criteria[1] . '.php';
+                $translatePath = $sitePath . DIRECTORY_SEPARATOR . $site->language . DIRECTORY_SEPARATOR . $criteria[1] . '.php';
             }
         }
         $translations = Craft::$app->request->getRequiredBodyParam('translation');
