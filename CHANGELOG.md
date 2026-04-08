@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 5.1.0 - 2026-04-08
+### Added
+- Added Dutch, French, and German translations for the plugin's control panel UI
+- Registered the plugin so the labels can also be changed from the CP
+### Fixed
+- Fixed missing translation category on the site banner text in the index template
+
 ## 5.0.1 - 2025-02-21
 ### Fixed
 - Fixed an error in the download dropdown when devMode was enabled ([#17](https://github.com/statikbe/craft-translate/issues/17))
