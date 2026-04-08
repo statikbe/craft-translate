@@ -161,7 +161,7 @@ class Translate extends Element
     /**
      * @inheritdoc
      */
-    protected static function defineSources(string $context = null): array
+    protected static function defineSources(?string $context = null): array
     {
         $sources = [];
 
@@ -233,12 +233,12 @@ class Translate extends Element
      */
     public static function indexHtml(
         ElementQueryInterface $elementQuery,
-        array                 $disabledElementIds = null,
+        ?array                $disabledElementIds,
         array                 $viewState,
-        string                $sourceKey = null,
-        string                $context = null,
+        ?string               $sourceKey,
+        ?string               $context,
         bool                  $includeContainer,
-        bool                  $showCheckboxes,
+        bool                  $selectable,
         bool                  $sortable,
     ): string {
         // just 1 locale enabled

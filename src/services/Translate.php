@@ -79,7 +79,7 @@ class Translate extends Component
      * @return bool
      * @throws \Exception if unable to write to file
      */
-    public function set(string $locale, array $translations, string $translationPath = null): bool
+    public function set(string $locale, array $translations, ?string $translationPath = null): bool
     {
         // Determine locale's translation destination file
         $file = $translationPath ?? $this->getSitePath($locale);
