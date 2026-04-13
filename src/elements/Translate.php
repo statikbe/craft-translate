@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Translate plugin for Craft CMS 3.x
  *
@@ -11,16 +12,17 @@
 namespace statikbe\translate\elements;
 
 use Craft;
-use craft\base\Element;
+use Dom\Element as DomElement;
 use craft\elements\db\ElementQueryInterface;
 use craft\elements\User;
+use craft\helpers\Html;
 use craft\web\ErrorHandler;
 use statikbe\translate\elements\db\TranslateQuery;
 use statikbe\translate\events\RegisterPluginTranslationEvent;
 use statikbe\translate\Translate as TranslatePlugin;
 use yii\base\Event;
 
-class Translate extends Element
+class Translate extends DomElement
 {
     /**
      * Status constants.
@@ -37,7 +39,7 @@ class Translate extends Element
     public $file;
     public $locale = 'en_us';
     public $field;
-//    public $translateStatus;
+    //    public $translateStatus;
 
     /**
      * Return element type name.
@@ -87,10 +89,10 @@ class Translate extends Element
      */
     public static function statuses(): array
     {
-//        return [
-//            self::TRANSLATED => Craft::t('translate', 'Translated'),
-//            self::PENDING => Craft::t('translate', 'Pending'),
-//        ];
+        //        return [
+        //            self::TRANSLATED => Craft::t('translate', 'Translated'),
+        //            self::PENDING => Craft::t('translate', 'Pending'),
+        //        ];
         return [];
     }
 
@@ -161,7 +163,7 @@ class Translate extends Element
     /**
      * @inheritdoc
      */
-    protected static function defineSources(?string $context = null): array
+    protected static function defineSources(string $context = null): array
     {
         $sources = [];
 
@@ -175,7 +177,7 @@ class Translate extends Element
                     Craft::$app->path->getSiteTemplatesPath(),
                 ],
             ],
-//            'nested' => $templateSources
+            //            'nested' => $templateSources
         ];
 
         $event = new RegisterPluginTranslationEvent([
@@ -188,7 +190,7 @@ class Translate extends Element
         foreach ($registerdPlugins as $path => $module) {
 
             //was vroeger $modulesources (om plugin mapje te maken met eronder de plugins, nu enkel balkje per plugin)
-//            $sources['plugins:' . $path] = [
+            //            $sources['plugins:' . $path] = [
             $modulesSources['plugins:' . $path] = [
                 'label' => $module->id,
                 'key' => 'plugins:' . $module->id,
@@ -228,17 +230,19 @@ class Translate extends Element
     }
 
 
+    public const SEARCH_RESULT_LIMIT = 100;
+
     /**
      * @inheritdoc
      */
     public static function indexHtml(
         ElementQueryInterface $elementQuery,
-        ?array                $disabledElementIds,
+        array                 $disabledElementIds = null,
         array                 $viewState,
-        ?string               $sourceKey,
-        ?string               $context,
+        string                $sourceKey = null,
+        string                $context = null,
         bool                  $includeContainer,
-        bool                  $selectable,
+        bool                  $showCheckboxes,
         bool                  $sortable,
     ): string {
         // just 1 locale enabled
@@ -247,9 +251,26 @@ class Translate extends Element
             $elementQuery->siteId = $primarySite->id;
         }
 
-
         $elementQuery->status = null;
+
+        // Better UI
+        Craft::$app->view->registerJs("$('table.fullwidth thead th').css('width', '50%');");
+        Craft::$app->view->registerJs("$('.buttons.hidden').removeClass('hidden');");
+        Craft::$app->view->registerJs("$('.filter-btn').addClass('hidden');");
+        Craft::$app->view->registerJs("$('.btn.statusmenubtn').addClass('hidden');");
+
         $elements = TranslatePlugin::getInstance()->translate->get($elementQuery);
+        $totalFound = count($elements);
+        $truncationBanner = '';
+
+        if ($totalFound > self::SEARCH_RESULT_LIMIT) {
+            $elements = array_slice($elements, 0, self::SEARCH_RESULT_LIMIT, true);
+            $warning = Craft::t('translate', 'Results are truncated: showing {limit} of {total} translations. Use the search field to narrow down results.', [
+                'limit' => self::SEARCH_RESULT_LIMIT,
+                'total' => $totalFound,
+            ]);
+            $truncationBanner = '<div class="readable" style="margin-bottom: 2.5rem;"><blockquote class="note error"><p>' . Html::encode($warning) . '</p></blockquote></div>';
+        }
 
         $variables = [
             'viewMode' => $viewState['mode'],
@@ -268,13 +289,7 @@ class Translate extends Element
             'inlineEditing' => true,
         ];
 
-        // Better UI
-        Craft::$app->view->registerJs("$('table.fullwidth thead th').css('width', '50%');");
-        Craft::$app->view->registerJs("$('.buttons.hidden').removeClass('hidden');");
-        Craft::$app->view->registerJs("$('.filter-btn').addClass('hidden');");
-        Craft::$app->view->registerJs("$('.btn.statusmenubtn').addClass('hidden');");
-
-        return Craft::$app->view->renderTemplate("_elements/tableview/container", $variables);
+        return $truncationBanner . Craft::$app->view->renderTemplate("_elements/tableview/container", $variables);
     }
 
     /**

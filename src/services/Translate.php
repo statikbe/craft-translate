@@ -15,6 +15,7 @@ use craft\base\Component;
 use craft\elements\db\ElementQueryInterface;
 use craft\helpers\ElementHelper;
 use craft\helpers\FileHelper;
+use craft\helpers\Html;
 use Exception;
 use statikbe\translate\elements\db\TranslateQuery;
 use statikbe\translate\elements\Translate as TranslateElement;
@@ -50,7 +51,7 @@ class Translate extends Component
             '/Craft\.(t|translate)\(.*?\'(.*?)\'.*?\,.*?\'(.*?)\'.*?\)/',
             // Double quotes
             '/Craft\.(t|translate)\(.*?"(.*?)".*?\,.*?"(.*?)".*?\)/',
-        ),
+        )
     );
 
 
@@ -79,7 +80,7 @@ class Translate extends Component
      * @return bool
      * @throws \Exception if unable to write to file
      */
-    public function set(string $locale, array $translations, ?string $translationPath = null): bool
+    public function set(string $locale, array $translations, string $translationPath = null): bool
     {
         // Determine locale's translation destination file
         $file = $translationPath ?? $this->getSitePath($locale);
@@ -104,6 +105,7 @@ class Translate extends Component
         // Save code to file
         try {
             FileHelper::writeToFile($file, $php);
+
         } catch (Throwable $e) {
             throw new Exception(Craft::t('translate', 'Something went wrong while saving your translations: ' . $e->getMessage()));
         }
@@ -124,50 +126,41 @@ class Translate extends Component
      */
     public function get(TranslateQuery $query, string $category = 'site'): array
     {
-        sleep(2);
-
         if (!is_array($query->source)) {
             $query->source = [$query->source];
         }
 
         $translations = [];
 
-        // Loop through paths
+        // Fetch site once, outside of all loops
+        $site = Craft::$app->getSites()->getSiteById($query->siteId);
 
         foreach ($query->source as $path) {
             if ($query->pluginHandle) {
                 $category = $query->pluginHandle;
             }
-            // Check if this is a folder or a file
+
             $isDir = is_dir($path);
 
             if ($isDir) {
                 $options = [
                     'recursive' => true,
                     'only' => ['*.php', '*.html', '*.twig', '*.js', '*.json', '*.atom', '*.rss'],
-                    'except' => ['vendor/', 'node_modules/'],
+                    'except' => ['vendor/', 'node_modules/']
                 ];
 
                 $files = FileHelper::findFiles($path, $options);
 
-                // Loop through files and find translate occurences
                 foreach ($files as $file) {
-
-                    // Parse file
-                    $elements = $this->_processFile($path, $file, $query, $category);
-
-                    // Collect in array
+                    $elements = $this->_processFile($path, $file, $query, $category, $site, $translations);
                     $translations = array_merge($translations, $elements);
                 }
             } elseif (file_exists($path)) {
-
-                // Parse file
-                $elements = $this->_processFile($path, $path, $query, $category);
-
-                // Collect in array
+                $elements = $this->_processFile($path, $path, $query, $category, $site, $translations);
                 $translations = array_merge($translations, $elements);
             }
         }
+
         return $translations;
     }
 
@@ -178,73 +171,73 @@ class Translate extends Component
      * @param string $file
      * @param ElementQueryInterface $query
      * @param string $category
+     * @param mixed $site
+     * @param array $existing Already-collected translations to skip duplicates
      *
      * @return array
-     * @throws \Twig_Error_Loader
-     * @throws \yii\base\Exception
      */
-    private function _processFile(string $path, string $file, ElementQueryInterface $query, string $category): array
+    private function _processFile(string $path, string $file, ElementQueryInterface $query, string $category, $site, array $existing = []): array
     {
-        $translations = array();
+        $translations = [];
         $contents = file_get_contents($file);
         $extension = pathinfo($file, PATHINFO_EXTENSION);
 
-        // Process the file
         foreach ($this->_expressions[$extension] as $regex) {
-            // Do it!
             $matches = $this->parseString($regex, $contents);
-            if ($matches) {
-                $pos = 1;
-                // Js and php files goes to 3
-                if ($extension === 'js' || $extension === 'php') {
-                    $pos = 3;
+            if (!$matches) {
+                continue;
+            }
+
+            $pos = ($extension === 'js' || $extension === 'php') ? 3 : 1;
+
+            foreach ($matches[$pos] as $original) {
+                // Skip duplicates already collected from previous files
+                if (isset($existing[$original]) || isset($translations[$original])) {
+                    continue;
                 }
-                foreach ($matches[$pos] as $original) {
-                    // Apply the Craft Translate
-                    $site = Craft::$app->getSites()->getSiteById($query->siteId);
-                    //changed $site->language to site handle
-                    $translation = Craft::t($category, $original, [], $site->language);
 
-                    $view = Craft::$app->getView();
-                    $slug = ElementHelper::generateSlug($original);
+                $translation = Craft::t($category, $original, [], $site->language);
 
-                    $field = $view->renderTemplate('_includes/forms/text', [
-                        'id' => $slug,
-                        'name' => 'translation[' . $original . ']',
-                        'value' => $translation,
-                        'placeholder' => $translation,
-                    ]);
+                // Apply search filter before building the element
+                if ($query->search && !stristr($original, $query->search) && !stristr($translation, $query->search)) {
+                    continue;
+                }
 
-                    // Let's create our translate element with all the info
-                    $element = new TranslateElement([
-                        'id' => $slug,
-                        'original' => $original,
-                        'translation' => $translation,
-                        'source' => $path,
-                        'file' => $file,
-                        'siteId' => $query->siteId,
-                        'field' => $field,
-                    ]);
-
-
-                    // Continue when Searching
-                    if ($query->search && !stristr($element->original, $query->search) && !stristr($element->translation, $query->search)) {
+                // Apply status filter before building the element
+                if ($query->status) {
+                    $status = ($original !== $translation) ? TranslateElement::TRANSLATED : TranslateElement::PENDING;
+                    if ($query->status !== $status) {
                         continue;
                     }
-                    // Continue when filter by status
-                    if ($query->status && $query->status != $element->getStatus()) {
-                        continue;
-                    }
-                    // add actions occurrences
-                    if ($query->id) {
-                        foreach ($query->id as $id) {
-                            if ($element->id == $id) {
-                                $translations[$element->original] = $element;
-                            }
+                }
+
+                $slug = ElementHelper::generateSlug($original);
+
+                // Build input HTML directly instead of rendering a Twig template per string
+                $field = Html::input('text', 'translation[' . $original . ']', $translation, [
+                    'id' => $slug,
+                    'class' => 'text fullwidth',
+                    'placeholder' => $translation,
+                ]);
+
+                $element = new TranslateElement([
+                    'id' => $slug,
+                    'original' => $original,
+                    'translation' => $translation,
+                    'source' => $path,
+                    'file' => $file,
+                    'siteId' => $query->siteId,
+                    'field' => $field,
+                ]);
+
+                if ($query->id) {
+                    foreach ($query->id as $id) {
+                        if ($element->id == $id) {
+                            $translations[$original] = $element;
                         }
-                    } else {
-                        $translations[$element->original] = $element;
                     }
+                } else {
+                    $translations[$original] = $element;
                 }
             }
         }
@@ -271,4 +264,5 @@ class Translate extends Component
         $sitePath = Craft::$app->getPath()->getSiteTranslationsPath();
         return $sitePath . DIRECTORY_SEPARATOR . $locale . DIRECTORY_SEPARATOR . 'site.php';
     }
+
 }
