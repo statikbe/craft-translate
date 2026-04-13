@@ -160,19 +160,15 @@
 
         processAjaxCall: function(event)
         {
-            $('.elements').hide();
             $('.flex .spinner').removeClass('invisible');
             event.preventDefault();
             var data = this.$form.serializeArray();
             data.push({name: 'sourceKey', value: Craft.elementIndex.sourceKey});
             Craft.postActionRequest('translate/translate/save', data, $.proxy(function (response, textStatus) {
+                $('.flex .spinner').addClass('invisible');
                 if (textStatus === 'success') {
                     if (response.success) {
-                        setTimeout(function () {
-                            Craft.cp.displayNotice(Craft.t('translate', 'Translations saved'));
-                            Craft.elementIndex.updateElements();
-                            $('.elements').show();
-                        }, 3000);
+                        Craft.cp.displayNotice(Craft.t('translate', 'Translations saved'));
                     }
                 } else {
                     Craft.cp.displayError(Craft.t('app', 'An unknown error occurred.'));

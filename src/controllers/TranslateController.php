@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Translate plugin for Craft CMS 3.x
  *
@@ -7,7 +8,6 @@
  * @link      https://www.statik.be
  * @copyright Copyright (c) 2017 Statik.be
  */
-
 
 namespace statikbe\translate\controllers;
 
@@ -86,7 +86,7 @@ class TranslateController extends BaseController
         $occurences = Translate::getInstance()->translate->get($query);
 
         // Re-order data
-        $data = StringHelper::convertToUTF8('"' . Craft::t('translate','Source {language}',['language' => $site->language]) . '","' . Craft::t('translate','Translation') . "\"\r\n");
+        $data = StringHelper::convertToUTF8('"' . Craft::t('translate', 'Source {language}', ['language' => $site->language]) . '","' . Craft::t('translate', 'Translation') . "\"\r\n");
 
         foreach ($occurences as $element) {
             $data .= StringHelper::convertToUTF8('"' . $element->original . '","' . $element->translation . "\"\r\n");
@@ -95,12 +95,12 @@ class TranslateController extends BaseController
         $info = Craft::$app->getInfo();
         //name in info bestaat niet. => Nu vast ingevuld met import
         $systemName = FileHelper::sanitizeFilename(
-//            $pluginName ?? $info->name,
+            //            $pluginName ?? $info->name,
             $pluginName ?? "import",
             [
                 'asciiOnly' => true,
                 'separator' => '_',
-            ]
+            ],
         );
         $date = date('YmdHis');
         $primarySite = Craft::$app->getSites()->getPrimarySite();
@@ -155,7 +155,7 @@ class TranslateController extends BaseController
             $siteId = Craft::$app->getSites()->getPrimarySite()->id;
         }
         $sourceKey = Craft::$app->request->getRequiredBodyParam('sourceKey');
-        $site = Craft::$app->getSites()->getSiteById((int)$siteId);
+        $site = Craft::$app->getSites()->getSiteById((int) $siteId);
 
         $pluginSubString = 'modules/plugins:';
         $translatePath = null;
