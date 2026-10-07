@@ -167,16 +167,19 @@ class Translate extends Element
 
         $sources[] = ['heading' => Craft::t('translate', 'Default')];
 
-        $sources[] = [
-            'label' => Craft::t('translate', 'Templates'),
-            'key' => 'all-templates:',
-            'criteria' => [
-                'source' => [
-                    Craft::$app->path->getSiteTemplatesPath(),
+        // One source per translation category stored in the site's translations folder (see config/app.php)
+        foreach (TranslatePlugin::getInstance()->translate->getSiteCategories() as $category) {
+            $sources[] = [
+                'label' => $category === 'site' ? Craft::t('translate', 'Templates') : $category,
+                'key' => 'category:' . $category,
+                'criteria' => [
+                    'category' => $category,
+                    'source' => [
+                        Craft::$app->path->getSiteTemplatesPath(),
+                    ],
                 ],
-            ],
-//            'nested' => $templateSources
-        ];
+            ];
+        }
 
         $event = new RegisterPluginTranslationEvent([
             'plugins' => [],

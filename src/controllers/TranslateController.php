@@ -19,6 +19,7 @@ use craft\web\Controller as BaseController;
 use craft\web\Response;
 use statikbe\translate\elements\Translate as ElementTranslate;
 use statikbe\translate\Translate;
+use yii\web\BadRequestHttpException;
 use yii\web\NotFoundHttpException;
 
 class TranslateController extends BaseController
@@ -37,6 +38,7 @@ class TranslateController extends BaseController
         $templateSubString = 'templates/templates:';
         $pluginSubString = 'plugins/plugins:';
         $allTemplatesSubString = 'all-templates:';
+        $categorySubString = 'category:';
 
         $sources = [];
         $query = ElementTranslate::find();
@@ -68,6 +70,17 @@ class TranslateController extends BaseController
 
         // All templates
         if (str_contains($sourceKey, $allTemplatesSubString)) {
+            $sources[] = Craft::$app->path->getSiteTemplatesPath();
+        }
+
+        // Templates for a translation category
+        if (str_starts_with($sourceKey, $categorySubString)) {
+            $category = substr($sourceKey, strlen($categorySubString));
+            if (!in_array($category, Translate::getInstance()->translate->getSiteCategories(), true)) {
+                return $this->asJson(['success' => false]);
+            }
+            $query->category = $category;
+            $pluginName = $category;
             $sources[] = Craft::$app->path->getSiteTemplatesPath();
         }
 
@@ -158,8 +171,18 @@ class TranslateController extends BaseController
         $site = Craft::$app->getSites()->getSiteById((int)$siteId);
 
         $pluginSubString = 'modules/plugins:';
+        $categorySubString = 'category:';
         $translatePath = null;
         $sitePath = Craft::$app->getPath()->getSiteTranslationsPath();
+
+        // Process translation category
+        if (str_starts_with($sourceKey, $categorySubString)) {
+            $category = substr($sourceKey, strlen($categorySubString));
+            if (!in_array($category, Translate::getInstance()->translate->getSiteCategories(), true)) {
+                throw new BadRequestHttpException('Invalid translation category');
+            }
+            $translatePath = Translate::getInstance()->translate->getSitePath($site->language, $category);
+        }
 
         // Process Plugin Status
         if (str_contains($sourceKey, $pluginSubString)) {
