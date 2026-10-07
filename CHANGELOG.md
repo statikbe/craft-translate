@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 5.2.0 - 2026-10-07
+### Added
+- Translation categories stored in the site's `translations` folder (e.g. `website_name`, registered in `config/app.php` with `basePath => '@translations'`) are now listed as separate sources in the CP
+- Translations in templates are now saved to the file of their category (`translations/<lang>/<category>.php`) instead of always to `site.php`
+- CSV downloads for a category source are named after that category
+
+### Changed
+- The "Templates" source now only shows strings from the `site` category (`|t` without a category)
+- Removed the 2 second delay when loading translations
+
+### Fixed
+- Translations with a category (e.g. `|t('website_name')`) were shown with the wrong value and saved to `site.php`
+- Twig filters starting with "t", like `|trim` and `|title`, were picked up as translations
+
 ## 5.1.0 - 2026-04-08
 ### Added
 - Added Dutch, French, and German translations for the plugin's control panel UI
