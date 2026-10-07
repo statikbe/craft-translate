@@ -8,7 +8,6 @@ use UnitTester;
 
 class TwigExpressionUnitTest extends Unit
 {
-
     public $translator;
     public $expressions;
 
@@ -27,71 +26,97 @@ class TwigExpressionUnitTest extends Unit
     {
         $string = "{{ 'hier'|t }}";
         $result = $this->tester->parseRegex($this->expressions, $string);
-        $this->assetMatchesArray($result, ['hier']);
-
-        $string = "{{ 'hier'|raw|t }}";
-        $result = $this->tester->parseRegex($this->expressions, $string);
-        $this->assetMatchesArray($result, ['hier']);
+        self::assertEquals(['hier'], $result);
 
         $string = "{{ 'hier'|t|raw }}";
         $result = $this->tester->parseRegex($this->expressions, $string);
-        $this->assetMatchesArray($result, ['hier']);
+        self::assertEquals(['hier'], $result);
     }
 
     public function testDoubleQuotes()
     {
         $string = '{{ "hier"|t }}';
         $result = $this->tester->parseRegex($this->expressions, $string);
-        $this->assetMatchesArray($result, ['hier']);
-
-        $string = '{{ "hier"|raw|t }}';
-        $result = $this->tester->parseRegex($this->expressions, $string);
-        $this->assetMatchesArray($result, ['hier']);
+        self::assertEquals(['hier'], $result);
 
         $string = '{{ "hier"|t|raw }}';
         $result = $this->tester->parseRegex($this->expressions, $string);
-        $this->assetMatchesArray($result, ['hier']);
+        self::assertEquals(['hier'], $result);
     }
 
     public function testNotATranslation()
     {
         $string = '{% set today = "now"|date("Ym") %}';
-        $str = $this->tester->parseRegex($this->expressions, $string);
-        self::assertEquals([], $str);
+        $result = $this->tester->parseRegex($this->expressions, $string);
+        self::assertEquals([], $result);
     }
 
+    public function testFilterStartingWithT()
+    {
+        $string = "{{ ' hier '|trim }} {{ \"hier\"|title }}";
+        $result = $this->tester->parseRegex($this->expressions, $string);
+        self::assertEquals([], $result);
+    }
 
     public function testStringWithReturns()
     {
         $string = '{{  "craft
             cms"|t }}';
         $result = $this->tester->parseRegex($this->expressions, $string);
-        $this->assetMatchesArray($result, ['craft cms']);
-
+        self::assertEquals(['craft cms'], $result);
     }
 
     public function testMultiple()
     {
         $string = '{{ "here"|t }} {{ "there"|t }}';
         $result = $this->tester->parseRegex($this->expressions, $string);
-        $this->assetMatchesArray($result, ["here", "there"]);
+        self::assertEquals(['here', 'there'], $result);
     }
 
-    public function assetMatchesArray($a, $b)
+    public function testWithoutCategoryIsSite()
     {
-        // if the indexes don't match, return immediately
-        if (count(array_diff_assoc($a, $b))) {
-            return [false];
-        }
-        // we know that the indexes, but maybe not values, match.
-        // compare the values between the two arrays
-        foreach ($a as $k => $v) {
-            if ($v !== $b[$k]) {
-                return false;
-            }
-        }
-        // we have identical indexes, and no unequal values
-        return true;
+        $string = "{{ 'hier'|t }} {{ \"daar\"|translate }}";
+        $result = $this->tester->parseRegexWithCategory($this->expressions, $string);
+        self::assertEquals([['hier', 'site'], ['daar', 'site']], $result);
     }
 
+    public function testWithCategory()
+    {
+        $string = "{{ 'account.login.email'|t('website_name') }}";
+        $result = $this->tester->parseRegexWithCategory($this->expressions, $string);
+        self::assertEquals([['account.login.email', 'website_name']], $result);
+
+        $string = '{{ "account.login.email"|t("website_name") }}';
+        $result = $this->tester->parseRegexWithCategory($this->expressions, $string);
+        self::assertEquals([['account.login.email', 'website_name']], $result);
+
+        $string = "{{ 'account.login.email'|translate( \"website_name\" ) }}";
+        $result = $this->tester->parseRegexWithCategory($this->expressions, $string);
+        self::assertEquals([['account.login.email', 'website_name']], $result);
+    }
+
+    public function testWithCategoryAndParams()
+    {
+        $string = '{{ "search.results"|t("website_name", {total: totalEntries}) }}';
+        $result = $this->tester->parseRegexWithCategory($this->expressions, $string);
+        self::assertEquals([['search.results', 'website_name']], $result);
+    }
+
+    public function testWithParamsOnlyIsSite()
+    {
+        $string = '{{ "{total} results"|t({total: totalEntries}) }}';
+        $result = $this->tester->parseRegexWithCategory($this->expressions, $string);
+        self::assertEquals([['{total} results', 'site']], $result);
+    }
+
+    public function testMixedCategories()
+    {
+        $string = "{{ 'nav.home'|t('website_name') }} {{ 'Home'|t }} {{ 'nav.home'|t('website_name_2') }}";
+        $result = $this->tester->parseRegexWithCategory($this->expressions, $string);
+        self::assertEquals([
+            ['nav.home', 'website_name'],
+            ['Home', 'site'],
+            ['nav.home', 'website_name_2'],
+        ], $result);
+    }
 }

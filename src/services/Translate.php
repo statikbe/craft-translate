@@ -39,9 +39,9 @@ class Translate extends Component
         // Regex for |t('category')
         'twig' => array(
             // Single quotes
-            "/'([^']+)'\ *\|\ *(t|translate)/mu",
+            "/'([^']+)'\s*\|\s*(?:t|translate)\b(?:\(\s*['\"]([^'\"]*)['\"])?/mu",
             // Double quotes
-            '/"([^"]+)"\ *\|\ *(t|translate)/mu',
+            '/"([^"]+)"\s*\|\s*(?:t|translate)\b(?:\(\s*[\'"]([^\'"]*)[\'"])?/mu',
         ),
 
         // Regex for Craft.t('category', '..')
@@ -114,30 +114,25 @@ class Translate extends Component
     /**
      * Get translations by Element Query.
      *
-     * @param ElementQueryInterface $query
-     *
-     * @param string $category
+     * @param TranslateQuery $query
      *
      * @return array
      * @throws \Twig_Error_Loader
      * @throws \yii\base\Exception
      */
-    public function get(TranslateQuery $query, string $category = 'site'): array
+    public function get(TranslateQuery $query): array
     {
-        sleep(2);
-
         if (!is_array($query->source)) {
             $query->source = [$query->source];
         }
 
         $translations = [];
 
-        // Loop through paths
+        // Plugin sources use the plugin handle as category, otherwise the source's category (default 'site')
+        $category = $query->pluginHandle ?: ($query->category ?: 'site');
 
+        // Loop through paths
         foreach ($query->source as $path) {
-            if ($query->pluginHandle) {
-                $category = $query->pluginHandle;
-            }
             // Check if this is a folder or a file
             $isDir = is_dir($path);
 
@@ -199,7 +194,13 @@ class Translate extends Component
                 if ($extension === 'js' || $extension === 'php') {
                     $pos = 3;
                 }
-                foreach ($matches[$pos] as $original) {
+                foreach ($matches[$pos] as $i => $original) {
+                    // Skip strings from other categories, a translation without category means 'site'
+                    $matchCategory = ($matches[2][$i] ?? '') ?: 'site';
+                    if (!$query->pluginHandle && $matchCategory !== $category) {
+                        continue;
+                    }
+
                     // Apply the Craft Translate
                     $site = Craft::$app->getSites()->getSiteById($query->siteId);
                     //changed $site->language to site handle
@@ -266,9 +267,30 @@ class Translate extends Component
      * @return string
      * @throws \yii\base\Exception
      */
-    public function getSitePath($locale): string
+    public function getSitePath($locale, string $category = 'site'): string
     {
         $sitePath = Craft::$app->getPath()->getSiteTranslationsPath();
-        return $sitePath . DIRECTORY_SEPARATOR . $locale . DIRECTORY_SEPARATOR . 'site.php';
+        return $sitePath . DIRECTORY_SEPARATOR . $locale . DIRECTORY_SEPARATOR . $category . '.php';
+    }
+
+    /**
+     * @throws \yii\base\Exception
+     */
+    public function getSiteCategories(): array
+    {
+        $sitePath = Craft::$app->getPath()->getSiteTranslationsPath();
+        $categories = [];
+
+        foreach (Craft::$app->getI18n()->translations as $category => $source) {
+            if (str_contains($category, '*')) {
+                continue;
+            }
+            $basePath = is_array($source) ? ($source['basePath'] ?? null) : ($source->basePath ?? null);
+            if ($basePath && rtrim(Craft::getAlias($basePath), '/') === rtrim($sitePath, '/')) {
+                $categories[] = $category;
+            }
+        }
+
+        return $categories;
     }
 }

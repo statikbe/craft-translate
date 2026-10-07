@@ -42,4 +42,20 @@ class UnitTester extends Actor
         }
         return $translations;
     }
+
+    /**
+     * Returns all matches as [original, category] pairs, a translation without category means 'site'
+     */
+    public function parseRegexWithCategory($expressions, $string, $pos = 1)
+    {
+        $translator = new \statikbe\translate\services\Translate();
+        $translations = [];
+        foreach ($expressions as $regex) {
+            $matches = $translator->parseString($regex, $string);
+            foreach ($matches[$pos] ?? [] as $i => $original) {
+                $translations[] = [$original, ($matches[2][$i] ?? '') ?: 'site'];
+            }
+        }
+        return $translations;
+    }
 }
