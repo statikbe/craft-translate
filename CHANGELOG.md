@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 5.2.1 - 2026-10-13
+### Changed
+- Updated the plugin icon
+
 ## 5.2.0 - 2026-10-07
 ### Added
 - Translation categories stored in the site's `translations` folder (e.g. `website_name`, registered in `config/app.php` with `basePath => '@translations'`) are now listed as separate sources in the CP
