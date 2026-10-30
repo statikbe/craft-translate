@@ -62,8 +62,10 @@
             //als url veranderd verander dan ook de banner naar de juiste site handle
             window.addEventListener('locationchange', function(){
                 //vergelijk de huidige tekst in de banner met de handle in de url
-                if(document.querySelector(".sitemenubtn").innerHTML != lang){
-                    document.querySelector(".currentTranslation span").innerHTML = document.querySelector(".sitemenubtn").innerHTML;
+                var siteMenuBtn = document.querySelector(".sitemenubtn");
+                var banner = document.querySelector(".currentTranslation span");
+                if(siteMenuBtn && banner && siteMenuBtn.innerHTML != lang){
+                    banner.innerHTML = siteMenuBtn.innerHTML;
                 }
             });
 
@@ -106,6 +108,38 @@
 
             Craft.elementIndex.on('afterAction', this.manageAfterAction);
             this.$menu.on('optionSelect', this.manageMenu);
+
+            // Translations stored in the database: only the changed ones, and restoring a default
+            var $changedOnly = $('#translate-changed-only');
+            if ($changedOnly.length) {
+                this.addListener($changedOnly, 'change', function() {
+                    Craft.elementIndex.settings.criteria = Object.assign({}, Craft.elementIndex.settings.criteria || {}, {
+                        changedOnly: $changedOnly.prop('checked') ? 1 : null
+                    });
+                    Craft.elementIndex.updateElements();
+                });
+            }
+            this.$form.on('click', '.translate-restore', $.proxy(this.restoreDefault, this));
+        },
+
+        restoreDefault: function(event)
+        {
+            event.preventDefault();
+            var $button = $(event.currentTarget);
+            $button.addClass('loading').prop('disabled', true);
+            Craft.sendActionRequest('POST', 'translate/translate/restore', {
+                data: {
+                    siteId: Craft.elementIndex.siteId,
+                    sourceKey: Craft.elementIndex.sourceKey,
+                    message: $button.data('message')
+                }
+            }).then(function() {
+                Craft.cp.displayNotice(Craft.t('translate', 'Default restored'));
+                Craft.elementIndex.updateElements();
+            }).catch(function() {
+                $button.removeClass('loading').prop('disabled', false);
+                Craft.cp.displayError(Craft.t('app', 'An unknown error occurred.'));
+            });
         },
 
         submitPrimaryForm: function (event) {

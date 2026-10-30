@@ -15,4 +15,9 @@ return [
     'Downloading file' => 'Bestand downloaden',
     'Translations saved' => 'Vertalingen opgeslagen',
     'You are editing the translations for site ' => 'Je bewerkt de vertalingen voor site ',
+    'Changed by {name} on {date}' => 'Gewijzigd door {name} op {date}',
+    'Changed on {date}' => 'Gewijzigd op {date}',
+    'Restore default' => 'Standaard terugzetten',
+    'Default restored' => 'Standaard teruggezet',
+    'Only show the translations editors changed' => 'Toon alleen de vertalingen die redacteurs wijzigden',
 ];

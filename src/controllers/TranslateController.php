@@ -201,10 +201,46 @@ class TranslateController extends BaseController
         $translations = Craft::$app->request->getRequiredBodyParam('translation');
         $translations = reset($translations);
 
+        if (Translate::getInstance()->getSettings()->storeInDatabase) {
+            // Only the values that differ from the files are stored, on top of them
+            $category = Translate::getInstance()->translate->categoryForSourceKey($sourceKey);
+            $userId = Craft::$app->getUser()->getId();
+            $response += Translate::getInstance()->overrides->save($category, $site->language, $translations['translation'] ?? [], $userId ? (int)$userId : null);
+
+            return $this->asJson($response);
+        }
+
         // Save to translation file
         Translate::getInstance()->translate->set($site->language, $translations['translation'], $translatePath);
 
         // Redirect back to page
         return $this->asJson($response);
+    }
+
+    /**
+     * Restores the default of a translation: removes the override an editor stored (with `storeInDatabase` on).
+     *
+     * @throws \yii\web\BadRequestHttpException
+     */
+    public function actionRestore(): \yii\web\Response
+    {
+        $this->requirePostRequest();
+        $this->requireAcceptsJson();
+
+        if (!Translate::getInstance()->getSettings()->storeInDatabase) {
+            throw new BadRequestHttpException('Translations aren\'t stored in the database.');
+        }
+
+        $siteId = (int)($this->request->getBodyParam('siteId') ?: Craft::$app->getSites()->getPrimarySite()->id);
+        $site = Craft::$app->getSites()->getSiteById($siteId);
+        if (!$site) {
+            throw new BadRequestHttpException('Invalid site');
+        }
+        $category = Translate::getInstance()->translate->categoryForSourceKey((string)$this->request->getRequiredBodyParam('sourceKey'));
+        $message = (string)$this->request->getRequiredBodyParam('message');
+
+        $restored = Translate::getInstance()->overrides->restore($category, $site->language, $message);
+
+        return $this->asJson(['success' => true, 'restored' => $restored]);
     }
 }

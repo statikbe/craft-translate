@@ -13,11 +13,14 @@ namespace statikbe\translate\services;
 use Craft;
 use craft\base\Component;
 use craft\elements\db\ElementQueryInterface;
+use craft\helpers\DateTimeHelper;
 use craft\helpers\ElementHelper;
 use craft\helpers\FileHelper;
+use craft\helpers\Html;
 use Exception;
 use statikbe\translate\elements\db\TranslateQuery;
 use statikbe\translate\elements\Translate as TranslateElement;
+use statikbe\translate\Translate as TranslatePlugin;
 use Throwable;
 
 class Translate extends Component
@@ -53,6 +56,9 @@ class Translate extends Component
         ),
     );
 
+
+    /** @var array<int, string|null> */
+    private array $_userNames = [];
 
     /**
      * Initialize service.
@@ -206,6 +212,12 @@ class Translate extends Component
                     //changed $site->language to site handle
                     $translation = Craft::t($category, $original, [], $site->language);
 
+                    // Stored in the database: whether an editor changed it
+                    $override = $this->_override($category, $site->language, $original);
+                    if (filter_var($query->changedOnly, FILTER_VALIDATE_BOOLEAN) && $override === null) {
+                        continue;
+                    }
+
                     $view = Craft::$app->getView();
                     $slug = ElementHelper::generateSlug($original);
 
@@ -215,6 +227,9 @@ class Translate extends Component
                         'value' => $translation,
                         'placeholder' => $translation,
                     ]);
+                    if ($override !== null) {
+                        $field .= $this->_overrideHtml($original, $override);
+                    }
 
                     // Let's create our translate element with all the info
                     $element = new TranslateElement([
@@ -225,6 +240,7 @@ class Translate extends Component
                         'file' => $file,
                         'siteId' => $query->siteId,
                         'field' => $field,
+                        'overridden' => $override !== null,
                     ]);
 
 
@@ -253,6 +269,80 @@ class Translate extends Component
         return $translations;
     }
 
+    /**
+     * The override an editor stored for a message (with `storeInDatabase` on), or null.
+     *
+     * @return array{translation: string, userId: int|null, dateUpdated: string}|null
+     */
+    private function _override(string $category, string $language, string $message): ?array
+    {
+        $plugin = TranslatePlugin::getInstance();
+        if (!$plugin || !$plugin->getSettings()->storeInDatabase) {
+            return null;
+        }
+
+        return $plugin->overrides->get($category, $language, $message);
+    }
+
+    /**
+     * The line under a changed translation: who changed it and when, and a button to restore the default.
+     *
+     * @param array{translation: string, userId: int|null, dateUpdated: string} $override
+     */
+    private function _overrideHtml(string $message, array $override): string
+    {
+        if ($override['userId'] !== null && !array_key_exists($override['userId'], $this->_userNames)) {
+            $this->_userNames += TranslatePlugin::getInstance()->overrides->userNames([$override['userId']]);
+            $this->_userNames[$override['userId']] ??= null;
+        }
+        $name = $override['userId'] !== null ? ($this->_userNames[$override['userId']] ?? null) : null;
+        $date = Craft::$app->getFormatter()->asDatetime(DateTimeHelper::toDateTime($override['dateUpdated'], false, false) ?: null, 'short');
+
+        $changed = $name !== null
+            ? Craft::t('translate', 'Changed by {name} on {date}', ['name' => $name, 'date' => $date])
+            : Craft::t('translate', 'Changed on {date}', ['date' => $date]);
+
+        return Html::tag('div',
+            Html::encode($changed) . ' · ' .
+            Html::button(Craft::t('translate', 'Restore default'), [
+                'type' => 'button',
+                'class' => 'translate-restore btn small',
+                'data-message' => $message,
+            ]),
+            ['class' => 'translate-override smalltext light', 'style' => 'margin-top: 4px;']
+        );
+    }
+
+    /**
+     * The messages used in the site's templates, per category: [category => [message, …]].
+     *
+     * @return array<string, string[]>
+     * @throws \yii\base\Exception
+     */
+    public function usedKeys(): array
+    {
+        $keys = [];
+        $files = FileHelper::findFiles(Craft::$app->getPath()->getSiteTemplatesPath(), [
+            'recursive' => true,
+            'only' => ['*.php', '*.html', '*.twig', '*.js', '*.json', '*.atom', '*.rss'],
+            'except' => ['vendor/', 'node_modules/'],
+        ]);
+        foreach ($files as $file) {
+            $extension = pathinfo($file, PATHINFO_EXTENSION);
+            $contents = (string)file_get_contents($file);
+            foreach ($this->_expressions[$extension] ?? [] as $regex) {
+                $matches = $this->parseString($regex, $contents);
+                $pos = in_array($extension, ['js', 'php'], true) ? 3 : 1;
+                foreach ($matches[$pos] ?? [] as $i => $message) {
+                    $category = ($matches[2][$i] ?? '') ?: 'site';
+                    $keys[$category][$message] = true;
+                }
+            }
+        }
+
+        return array_map(fn(array $messages) => array_map('strval', array_keys($messages)), $keys);
+    }
+
     public function parseString($expression, $string)
     {
         $string = preg_replace("/\r?\n|\r|\n/", " ", $string);
@@ -271,6 +361,34 @@ class Translate extends Component
     {
         $sitePath = Craft::$app->getPath()->getSiteTranslationsPath();
         return $sitePath . DIRECTORY_SEPARATOR . $locale . DIRECTORY_SEPARATOR . $category . '.php';
+    }
+
+    /**
+     * The translation category of a source in the control panel: `category:website_name` → website_name, a plugin source
+     * → the plugin's handle, anything else → site.
+     *
+     * @throws \yii\web\BadRequestHttpException for a category that isn't stored in the site's translations folder
+     */
+    public function categoryForSourceKey(string $sourceKey): string
+    {
+        if (str_starts_with($sourceKey, 'category:')) {
+            $category = substr($sourceKey, strlen('category:'));
+            if (!in_array($category, $this->getSiteCategories(), true)) {
+                throw new \yii\web\BadRequestHttpException('Invalid translation category');
+            }
+            return $category;
+        }
+
+        if (str_contains($sourceKey, 'plugins:')) {
+            $handle = substr($sourceKey, strrpos($sourceKey, 'plugins:') + strlen('plugins:'));
+            $plugin = Craft::$app->getPlugins()->getPlugin($handle);
+            if (!$plugin) {
+                throw new \yii\web\BadRequestHttpException('Invalid plugin');
+            }
+            return $plugin->getHandle();
+        }
+
+        return 'site';
     }
 
     /**

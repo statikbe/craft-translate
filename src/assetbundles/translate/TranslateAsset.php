@@ -12,10 +12,11 @@ namespace statikbe\translate\assetbundles\translate;
 
 use craft\web\AssetBundle;
 use craft\web\assets\cp\CpAsset;
+use craft\web\View;
 
 class TranslateAsset extends AssetBundle
 {
-    public function init()
+    public function init(): void
     {
         // define the path that your publishable resources live
         $this->sourcePath = '@statikbe/translate/assetbundles/translate';
@@ -30,5 +31,18 @@ class TranslateAsset extends AssetBundle
         ];
 
         parent::init();
+    }
+
+    public function registerAssetFiles($view): void
+    {
+        parent::registerAssetFiles($view);
+
+        if ($view instanceof View) {
+            $view->registerTranslations('translate', [
+                'Default restored',
+                'Downloading file',
+                'Translations saved',
+            ]);
+        }
     }
 }

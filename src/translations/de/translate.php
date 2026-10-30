@@ -15,4 +15,9 @@ return [
     'Downloading file' => 'Datei wird heruntergeladen',
     'Translations saved' => 'Übersetzungen gespeichert',
     'You are editing the translations for site ' => 'Sie bearbeiten die Übersetzungen für die Website ',
+    'Changed by {name} on {date}' => 'Geändert von {name} am {date}',
+    'Changed on {date}' => 'Geändert am {date}',
+    'Restore default' => 'Standard wiederherstellen',
+    'Default restored' => 'Standard wiederhergestellt',
+    'Only show the translations editors changed' => 'Nur die von Redakteuren geänderten Übersetzungen anzeigen',
 ];
