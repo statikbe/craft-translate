@@ -37,6 +37,8 @@ class Translate extends Element
     public $file;
     public $locale = 'en_us';
     public $field;
+    /** @var bool Whether an editor changed it (stored in the database) */
+    public bool $overridden = false;
 //    public $translateStatus;
 
     /**

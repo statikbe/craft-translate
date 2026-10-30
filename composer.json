@@ -2,7 +2,7 @@
   "name": "statikbe/craft-translate",
   "description": "Translate static string from the Craft control panel",
   "type": "craft-plugin",
-  "version": "5.2.1",
+  "version": "5.3.0",
   "keywords": [
     "craft",
     "cms",
@@ -32,7 +32,7 @@
   "extra": {
     "name": "Translate",
     "handle": "translate",
-    "schemaVersion": "1.0.0",
+    "schemaVersion": "1.1.0",
     "hasSettings": true,
     "developer": "Statik",
     "class": "statikbe\\translate\\Translate",
@@ -53,7 +53,6 @@
     "fix-cs": "ecs check --ansi --fix",
     "phpstan": "phpstan --memory-limit=1G",
     "test": "./vendor/bin/codecept run unit"
-
   },
   "config": {
     "allow-plugins": {

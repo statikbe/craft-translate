@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 5.3.0 - 2026-10-30
+### Added
+- `storeInDatabase` setting (in `config/translate.php`, off by default): the translations editors change in the control panel are stored in the database (table `translate_overrides`) on top of the translation files, instead of being written into those files. Only values that differ from the default are stored; a value set back to its default (or emptied) removes it. A deploy can then update the files in git without overwriting what editors changed.
+- With `storeInDatabase` on: every translation category that reads PHP files (the site's categories like `site` and `website_name`, and plugin categories like `formie`) gets the overrides on top, in Craft's own order (plugin files, the site's translations folder, the generic language before the specific one). All overrides are read once per request from the data cache; a warm cache adds no query.
+- The control panel shows who changed a translation and when, a **Restore default** button, and a filter to only show the translations editors changed
+- Console commands `translate/overrides/list`, `prune` (removes overrides that equal their default or whose key is no longer used), `promote` (writes the overrides into the translation files, for developers; dev mode or `--force`) and `import-files --from=<path>` (imports an old translations folder once: values that differ from the defaults become overrides; idempotent)
+
+### Fixed
+- A JavaScript error on every reload of the translations list (the site banner looked for an element Craft 5 doesn't have)
+
 ## 5.2.1 - 2026-10-13
 ### Changed
 - Updated the plugin icon

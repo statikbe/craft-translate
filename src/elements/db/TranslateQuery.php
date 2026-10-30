@@ -21,6 +21,8 @@ class TranslateQuery extends ElementQuery
     public $translateStatus;
     public $pluginHandle;
     public $category;
+    /** @var bool|string|null Only the translations an editor changed (with `storeInDatabase` on) */
+    public $changedOnly;
 
     /**
      * @inheritdoc
