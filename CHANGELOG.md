@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 5.3.1 - 2026-10-30
+### Fixed
+- `translate/overrides/import-files` no longer stores untranslated messages as overrides: a value that is just the message itself (which earlier versions wrote into the file for every untranslated message when a page of translations was saved) is skipped when the translation files have a translation for it
+
 ## 5.3.0 - 2026-10-30
 ### Added
 - `storeInDatabase` setting (in `config/translate.php`, off by default): the translations editors change in the control panel are stored in the database (table `translate_overrides`) on top of the translation files, instead of being written into those files. Only values that differ from the default are stored; a value set back to its default (or emptied) removes it. A deploy can then update the files in git without overwriting what editors changed.

@@ -142,11 +142,12 @@ class OverridesController extends Controller
         }
 
         $this->stdout(sprintf(
-            "%s %d override(s), %d of them for a key that isn't in the code. Skipped: %d the same as the default, %d already imported, %d empty.\n",
+            "%s %d override(s), %d of them for a key that isn't in the code. Skipped: %d the same as the default, %d untranslated, %d already imported, %d empty.\n",
             $this->dryRun ? 'Would store' : 'Stored',
             ($counts[OverrideRules::IMPORT_OVERRIDE] ?? 0) + ($counts[OverrideRules::IMPORT_UNKNOWN] ?? 0),
             $counts[OverrideRules::IMPORT_UNKNOWN] ?? 0,
             $counts[OverrideRules::IMPORT_DEFAULT] ?? 0,
+            $counts[OverrideRules::IMPORT_UNTRANSLATED] ?? 0,
             $counts[OverrideRules::IMPORT_UNCHANGED] ?? 0,
             $counts[OverrideRules::IMPORT_EMPTY] ?? 0,
         ), Console::FG_GREEN);
