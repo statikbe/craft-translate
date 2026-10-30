@@ -19,6 +19,7 @@ class OverrideRules
     public const IMPORT_UNCHANGED = 'unchanged';
     public const IMPORT_OVERRIDE = 'override';
     public const IMPORT_UNKNOWN = 'unknown';
+    public const IMPORT_UNTRANSLATED = 'untranslated';
 
     /**
      * The value a message shows without an override: its default, or the message itself (Craft's forceTranslation).
@@ -64,6 +65,11 @@ class OverrideRules
         }
         if ($value === $existing) {
             return self::IMPORT_UNCHANGED;
+        }
+        // The message itself as value, while the code has a translation: an untranslated message the old plugin wrote into
+        // the file when a page of translations was saved, not an editor's choice
+        if ($value === $message && array_key_exists($message, $defaults)) {
+            return self::IMPORT_UNTRANSLATED;
         }
 
         return array_key_exists($message, $defaults) ? self::IMPORT_OVERRIDE : self::IMPORT_UNKNOWN;

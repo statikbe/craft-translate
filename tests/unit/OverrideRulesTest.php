@@ -50,6 +50,8 @@ class OverrideRulesTest extends Unit
         self::assertSame(OverrideRules::IMPORT_UNKNOWN, OverrideRules::classifyImport('old.key', 'Oud', $this->defaults, null));
         // ... unless it shows the same as without it
         self::assertSame(OverrideRules::IMPORT_DEFAULT, OverrideRules::classifyImport('old.key', 'old.key', $this->defaults, null));
+        // The key itself as value while the code has a translation: an untranslated message, not an editor's choice
+        self::assertSame(OverrideRules::IMPORT_UNTRANSLATED, OverrideRules::classifyImport('nav.home', 'nav.home', $this->defaults, null));
     }
 
     public function testMergeOrder()
