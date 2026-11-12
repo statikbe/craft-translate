@@ -18,6 +18,7 @@ use craft\helpers\StringHelper;
 use craft\web\Controller as BaseController;
 use craft\web\Response;
 use statikbe\translate\elements\Translate as ElementTranslate;
+use statikbe\translate\helpers\PostedTranslations;
 use statikbe\translate\Translate;
 use yii\web\BadRequestHttpException;
 use yii\web\NotFoundHttpException;
@@ -198,20 +199,19 @@ class TranslateController extends BaseController
                 $translatePath = $sitePath . DIRECTORY_SEPARATOR . $site->language . DIRECTORY_SEPARATOR . $criteria[1] . '.php';
             }
         }
-        $translations = Craft::$app->request->getRequiredBodyParam('translation');
-        $translations = reset($translations);
+        $translations = PostedTranslations::messages(Craft::$app->request->getRequiredBodyParam('translation'));
 
         if (Translate::getInstance()->getSettings()->storeInDatabase) {
             // Only the values that differ from the files are stored, on top of them
             $category = Translate::getInstance()->translate->categoryForSourceKey($sourceKey);
             $userId = Craft::$app->getUser()->getId();
-            $response += Translate::getInstance()->overrides->save($category, $site->language, $translations['translation'] ?? [], $userId ? (int)$userId : null);
+            $response += Translate::getInstance()->overrides->save($category, $site->language, $translations, $userId ? (int)$userId : null);
 
             return $this->asJson($response);
         }
 
         // Save to translation file
-        Translate::getInstance()->translate->set($site->language, $translations['translation'], $translatePath);
+        Translate::getInstance()->translate->set($site->language, $translations, $translatePath);
 
         // Redirect back to page
         return $this->asJson($response);
