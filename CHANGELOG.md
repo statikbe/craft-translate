@@ -4,9 +4,19 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 5.3.3 - 2026-11-14
+### Security
+- All `translate/translate/*` controller actions now require the "Access Translate" permission (`accessPlugin-translate`)
+- Removed `translate/translate/download-csv-file`: the CSV export is now sent by `translate/translate/download` itself, so no file path goes through the browser
+- Saving translations for a module rejects ids that aren't a plain handle
+- The CSV export no longer scans a templates path taken from the request
+
+
 ## 5.3.2 - 2026-11-12
 ### Fixed
 - Saving a page of translations lost the changes to some of them: messages starting with a number (like "1. Choose a procedure") are posted in another group than the rest, and only the first group was saved
+
+
 
 ## 5.3.1 - 2026-10-30
 ### Fixed

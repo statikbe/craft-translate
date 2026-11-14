@@ -164,27 +164,12 @@
                 sourceKey: Craft.elementIndex.sourceKey
             };
 
-            Craft.postActionRequest('translate/translate/download', data, $.proxy(function(response, textStatus) {
-                if (textStatus === 'success') {
-                    if (response.success)
-                    {
-                        if (response.filePath){
-                            var $iframe = $('<iframe/>', {'src': Craft.getActionUrl('translate/translate/download-csv-file', {'filepath': response.filePath})}).hide();
-                            $("#translate-ajax").append($iframe);
-                            Craft.cp.displayNotice(Craft.t('translate', 'Downloading file'));
-                        }
-                        else {
-                            Craft.cp.displayError(Craft.t('app', 'There was an error when generating the file'));
-                        }
-                    }
-                    else {
-                        Craft.cp.displayError(Craft.t('app', 'Please select a different source'));
-                    }
-                }
-                else {
-                    Craft.cp.displayError(Craft.t('app', 'An unknown error occurred.'));
-                }
-            }, this));
+            data[Craft.csrfTokenName] = Craft.csrfTokenValue;
+
+            Craft.cp.displayNotice(Craft.t('translate', 'Downloading file'));
+            Craft.downloadFromUrl('POST', Craft.getActionUrl('translate/translate/download'), data).catch(function() {
+                Craft.cp.displayError(Craft.t('app', 'Please select a different source'));
+            });
         },
 
         manageAfterAction: function(action, params)
