@@ -13,16 +13,26 @@ namespace statikbe\translate\controllers;
 
 use Craft;
 use craft\helpers\FileHelper;
-use craft\helpers\Path;
 use craft\helpers\StringHelper;
 use craft\web\Controller as BaseController;
-use craft\web\Response;
 use statikbe\translate\elements\Translate as ElementTranslate;
 use statikbe\translate\Translate;
-use yii\web\NotFoundHttpException;
+use yii\web\BadRequestHttpException;
 
 class TranslateController extends BaseController
 {
+    /**
+     * Every action needs access to the Translate section of the control panel.
+     *
+     * @inheritdoc
+     */
+    public function beforeAction($action): bool
+    {
+        $this->requirePermission('accessPlugin-translate');
+
+        return parent::beforeAction($action);
+    }
+
     /**
      * Download translations.
      *
@@ -30,7 +40,7 @@ class TranslateController extends BaseController
      */
     public function actionDownload(): \yii\web\Response
     {
-        $this->requireAcceptsJson();
+        $this->requirePostRequest();
         $siteId = Craft::$app->request->getRequiredBodyParam('siteId');
         $sourceKey = Craft::$app->request->getRequiredBodyParam('sourceKey');
         $statusSubString = 'status:';
@@ -53,8 +63,8 @@ class TranslateController extends BaseController
 
         // Process Templates Status
         if (str_contains($sourceKey, $templateSubString)) {
-            $criteria = explode($templateSubString, $sourceKey);
-            $sources[] = $criteria[1] ?? Craft::$app->path->getSiteTemplatesPath();
+            // Never scan a path from the request
+            $sources[] = Craft::$app->path->getSiteTemplatesPath();
         }
 
         // Process Plugin Status
@@ -72,7 +82,7 @@ class TranslateController extends BaseController
         }
 
         if (empty($sources)){
-            return $this->asJson(['success'=> false]);
+            throw new BadRequestHttpException('Invalid source');
         }
 
         $site = Craft::$app->getSites()->getSiteById($siteId);
@@ -106,36 +116,8 @@ class TranslateController extends BaseController
         $primarySite = Craft::$app->getSites()->getPrimarySite();
         $sourceTo = $primarySite->language.'_to_'.$site->language;
         $fileName = strtolower($systemName.'_translations_'.$sourceTo.'_'.$date);
-        $file = Craft::$app->getPath()->getTempPath().DIRECTORY_SEPARATOR.StringHelper::toLowerCase($fileName.'.csv');
-        $fd = fopen ($file, "w");
-        fputs($fd, $data);
-        fclose($fd);
 
-        // Download the file
-        $response = [
-            'success'=> true,
-            'filePath' => $file
-        ];
-
-        return $this->asJson($response);
-    }
-
-    /**
-     * Returns Translate csv file
-     *
-     * @return Response
-     * @throws NotFoundHttpException if the requested backup cannot be found
-     * @throws \yii\web\BadRequestHttpException
-     */
-    public function actionDownloadCsvFile(): Response
-    {
-        $filePath = Craft::$app->getRequest()->getRequiredQueryParam('filepath');
-
-        if (!is_file($filePath) || !Path::ensurePathIsContained($filePath)) {
-            throw new NotFoundHttpException(Craft::t('translate', 'Invalid Translate File path'));
-        }
-
-        return Craft::$app->getResponse()->sendFile($filePath);
+        return $this->response->sendContentAsFile($data, $fileName . '.csv', ['mimeType' => 'text/csv']);
     }
 
     /**

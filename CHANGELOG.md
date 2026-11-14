@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/) and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## 2.1.6 - 2026-11-14
+### Security
+- All `translate/translate/*` controller actions now require the "Access Translate" permission (`accessPlugin-translate`)
+- Removed `translate/translate/download-csv-file`: the CSV export is now sent by `translate/translate/download` itself, so no file path goes through the browser
+- The CSV export no longer scans a templates path taken from the request
+
 ## 2.1.5 - 2025-02-21
 ### Fixed
 - Fixed an error in the download dropdown when devMode was enabled ([#17](https://github.com/statikbe/craft-translate/issues/17))
